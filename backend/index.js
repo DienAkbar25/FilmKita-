@@ -5,10 +5,13 @@ const app = express();
 
 const filmRoutes = require("./src/routes/film/film.routes");
 const filmSearchRoutes = require("./src/routes/film/film.search.routes");
+const filmGenreRoutes = require("./src/routes/film/film.genre.routes");
+const filmYearRoutes = require("./src/routes/film/film.year.route");
 
 app.use("/api/films", filmSearchRoutes);
-
 app.use("/api/films", filmRoutes);
+app.use("/api/films", filmGenreRoutes);
+app.use("/api/films", filmYearRoutes);
 
 app.use(express.json());
 
