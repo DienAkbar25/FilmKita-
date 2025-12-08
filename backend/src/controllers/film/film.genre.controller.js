@@ -1,9 +1,9 @@
 const { sql, poolPromise } = require("../../config/db");
 
 exports.getFilmsByGenre = async (req, res) => {
-  // ambil genre & page dari query ?genre=Drama&page=1
+  
   const { genre } = req.query;
-  const page = parseInt(req.query.page || "1");
+  const page = parseInt(req.query.page || "1"); 
 
   if (!genre || genre.trim() === "") {
     return res.status(400).json({
@@ -32,7 +32,7 @@ exports.getFilmsByGenre = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
-      detail: err.message, // boleh dihapus kalau ga mau ngasih detail
+      detail: err.message, 
     });
   }
 };
