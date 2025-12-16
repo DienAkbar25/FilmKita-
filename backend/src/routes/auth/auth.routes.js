@@ -3,10 +3,11 @@ const router = express.Router();
 
 const authCtrl = require("../../controllers/auth/auth.controller");
 const authMid = require("../../middleware/mid.auth");
-const asyncHandler = require("../../middleware/mid.asyncHandler");
+const loginLimiter = require("../../middleware/mid.loginRatelimit");
 
-router.post("/login", asyncHandler(authCtrl.login));
-router.post("/logout", asyncHandler(authCtrl.logout));
-router.get("/me", authMid, asyncHandler(authCtrl.me));
+
+router.post("/login", loginLimiter, authCtrl.login);
+router.post("/logout", authCtrl.logout);
+router.get("/me", authMid, authCtrl.me);
 
 module.exports = router;

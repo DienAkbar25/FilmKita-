@@ -50,7 +50,7 @@ app.use("/api/films", filmYearRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 app.use((err, req, res, next) => {
-  console.error("🔥 EXPRESS ERROR:", err);
+  console.error("EXPRESS ERROR:", err);
 
   res.status(err.status || 500).json({
     msg: "Internal Server Error",
@@ -64,5 +64,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🔥 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

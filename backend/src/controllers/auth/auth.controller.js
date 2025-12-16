@@ -4,8 +4,11 @@ const db = require("../../services/appDb");
 exports.login = async (req, res) => {
   const { username, password } = req.body;
 
+  // pesan error GENERIC (anti enumeration)
+  const INVALID_MSG = "Username atau password salah";
+
   if (!username || !password) {
-    return res.status(400).json({ msg: "Username dan password wajib diisi" });
+    return res.status(400).json({ msg: INVALID_MSG });
   }
 
   const result = await db.query(
@@ -13,17 +16,21 @@ exports.login = async (req, res) => {
     { username }
   );
 
+  // kalau user ga ada
   if (result.recordset.length === 0) {
-    return res.status(401).json({ msg: "User tidak ditemukan" });
+    // fake delay biar timing mirip (opsional tapi keren)
+    await bcrypt.compare(password, "$2b$10$invalidinvalidinvalidinvalidinv");
+    return res.status(401).json({ msg: INVALID_MSG });
   }
 
   const user = result.recordset[0];
 
   const isValid = await bcrypt.compare(password, user.PasswordHash);
   if (!isValid) {
-    return res.status(401).json({ msg: "Password salah" });
+    return res.status(401).json({ msg: INVALID_MSG });
   }
 
+  // sukses login
   req.session.user = {
     userId: user.UserID,
     username: user.Username,
@@ -46,5 +53,12 @@ exports.logout = (req, res) => {
 };
 
 exports.me = (req, res) => {
-  res.json(req.session.user);
+  if (!req.session.user) {
+    return res.json({ loggedIn: false });
+  }
+
+  res.json({
+    loggedIn: true,
+    user: req.session.user
+  });
 };
