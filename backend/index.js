@@ -4,14 +4,9 @@ const session = require("express-session");
 
 const app = express();
 
-/* =========================
-   GLOBAL MIDDLEWARE
-========================= */
 
-// parser JSON (WAJIB DI ATAS)
 app.use(express.json());
 
-// SESSION (AUTH)
 app.use(
   session({
     name: "filmkita.sid",
@@ -25,9 +20,6 @@ app.use(
   })
 );
 
-/* =========================
-   ROUTES
-========================= */
 const dashboardRoutes = require("./src/routes/dashboard/dashboard.routes");
 const filmRoutes = require("./src/routes/film/film.routes");
 const filmSearchRoutes = require("./src/routes/film/film.search.routes");
@@ -36,17 +28,14 @@ const filmYearRoutes = require("./src/routes/film/film.year.route");
 const filmDetailRoutes = require("./src/routes/film/film.detail.routes");
 const authRoutes = require("./src/routes/auth/auth.routes");
 
-// AUTH
 app.use("/api/auth", authRoutes);
 
-// FILM (PUBLIC)
 app.use("/api/films", filmDetailRoutes);
 app.use("/api/films", filmSearchRoutes);
 app.use("/api/films", filmRoutes);
 app.use("/api/films", filmGenreRoutes);
 app.use("/api/films", filmYearRoutes);
 
-//DASHBOARD
 app.use("/api/dashboard", dashboardRoutes);
 
 app.use((err, req, res, next) => {

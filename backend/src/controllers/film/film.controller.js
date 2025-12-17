@@ -1,25 +1,33 @@
-const { sql, poolPromise } = require("../../config/db");
+const { poolPromise } = require("../../config/db");
 
-exports.getAllFilms = async (req, res) => {
-  console.log("getAllFilms dipanggil, coba query DB...");
-
+exports.getHomePage = async (req, res) => {
   try {
     const pool = await poolPromise;
-    console.log("Pool kebentuk, siap query");
 
-    // 1) TEST PALING SIMPLE DULU
-    const result = await pool.request().query("SELECT TOP 10 * FROM Show_Basic1");
-    console.log("SELECT 1 berhasil:", result.recordset);
+    const moviesResult = await pool.request().query(`
+      SELECT *
+      FROM dbo.vw_Movie_Top10_Page
+      ORDER BY Rating DESC
+    `);
+
+    const tvResult = await pool.request().query(`
+      SELECT *
+      FROM dbo.vw_TvShow_Top10_Page
+      ORDER BY Rating DESC
+    `);
 
     res.json({
       success: true,
-      data: result.recordset,
+      data: {
+        movies: moviesResult.recordset,
+        tvShows: tvResult.recordset
+      }
     });
   } catch (err) {
-    console.error("Error getAllFilms:", err);
+    console.error("Home page error:", err);
     res.status(500).json({
       success: false,
-      message: err.message, // kita kirim pesan error asli DB ke client
+      message: err.message
     });
   }
 };
