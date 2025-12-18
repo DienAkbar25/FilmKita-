@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 const { poolPromise } = require("../../config/db");
 
 exports.getHomePage = async (req, res) => {
@@ -33,13 +34,27 @@ exports.getAllFilms = async (req, res) => {
       success: true,
       data: mockFilms,
 >>>>>>> Stashed changes
+=======
+const { mockFilms } = require("../../config/mockData");
+
+exports.getAllFilms = async (req, res) => {
+  try {
+    // Return mock data
+    res.json({
+      success: true,
+      data: mockFilms,
+>>>>>>> Stashed changes
     });
   } catch (err) {
     console.error("Home page error:", err);
     res.status(500).json({
       success: false,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       message: err.message
+=======
+      message: err.message,
+>>>>>>> Stashed changes
 =======
       message: err.message,
 >>>>>>> Stashed changes

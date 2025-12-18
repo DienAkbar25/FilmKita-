@@ -1,12 +1,16 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import MovieDetail from './pages/MovieDetail';
+import GenreSearch from './pages/GenreSearch';
+import YearSearch from './pages/YearSearch';
+import Login from './pages/Login';
+import MarketingDashboard from './pages/MarketingDashboard';
+import ExecutiveDashboard from './pages/ExecutiveDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import { filmAPI } from './services/api';
 
 function App() {
-<<<<<<< Updated upstream
-  const [count, setCount] = useState(0)
-=======
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('All Genres');
   const [selectedYear, setSelectedYear] = useState('All Years');
@@ -70,19 +74,35 @@ function App() {
     
     return matchesSearch && matchesGenre && matchesYear;
   });
->>>>>>> Stashed changes
 
   return (
-    <>
-      <div className='enak'> 
-        crot enak
-      </div>
-
-      <div className='ahh pelanin dikit'>
-        ahh pelanin dikit 
-      </div>
-    </>
-  )
+    <Routes>
+      <Route path="/" element={<HomePage 
+        movies={movies} 
+        navigate={navigate} 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+        selectedGenre={selectedGenre} 
+        setSelectedGenre={setSelectedGenre} 
+        selectedYear={selectedYear} 
+        setSelectedYear={setSelectedYear} 
+        isGenreOpen={isGenreOpen} 
+        setIsGenreOpen={setIsGenreOpen} 
+        isYearOpen={isYearOpen} 
+        setIsYearOpen={setIsYearOpen} 
+        filteredMovies={filteredMovies} 
+        allGenres={allGenres} 
+        allYears={allYears}
+        loading={loading}
+      />} />
+      <Route path="/movie/:id" element={<MovieDetail movies={movies} />} />
+      <Route path="/genre/:genre" element={<GenreSearch movies={movies} />} />
+      <Route path="/year/:year" element={<YearSearch movies={movies} />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard/marketing" element={<ProtectedRoute requiredRole="marketing"><MarketingDashboard movies={movies} /></ProtectedRoute>} />
+      <Route path="/dashboard/executive" element={<ProtectedRoute requiredRole="executive"><ExecutiveDashboard movies={movies} /></ProtectedRoute>} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;
