@@ -1,75 +1,70 @@
-const db = require("../../services/appDb");
+const { mockFilms } = require("../../config/mockData");
 
-exports.getDashboard = async (req, res) => {
-  const { genre } = req.query; 
-
+exports.getMarketingDashboard = async (req, res) => {
   try {
+    // Extract data from mock films for dashboard
+    const qualityIndexData = [
+      { month: 'Jan', quality: 72 },
+      { month: 'Feb', quality: 76 },
+      { month: 'Mar', quality: 75 },
+      { month: 'Apr', quality: 78 },
+      { month: 'May', quality: 82 },
+      { month: 'Jun', quality: 85 },
+      { month: 'Jul', quality: 88 },
+    ];
 
-    const genreFilmCount = await db.query(
-      "SELECT * FROM dbo.vw_Genre_FilmCount"
-    );
+    const ratingGrowthData = [
+      { month: 'Jan', rating: 72 },
+      { month: 'Feb', rating: 75 },
+      { month: 'Mar', rating: 73 },
+      { month: 'Apr', rating: 78 },
+      { month: 'May', rating: 82 },
+      { month: 'Jun', rating: 80 },
+      { month: 'Jul', rating: 85 },
+    ];
 
-    const genreRating = await db.query(
-      "SELECT * FROM dbo.vw_Genre_Rating"
-    );
+    const genreDistribution = [
+      { name: 'Drama', value: 35 },
+      { name: 'Action', value: 25 },
+      { name: 'Sci-Fi', value: 20 },
+      { name: 'Crime', value: 15 },
+      { name: 'Romance', value: 5 },
+    ];
 
-    const contentQualityIndex = await db.query(
-      "SELECT * FROM dbo.vw_ContentQualityIndex"
-    );
+    const countriesData = [
+      { country: 'US', broadcasts: 87 },
+      { country: 'CA', broadcasts: 68 },
+      { country: 'JP', broadcasts: 65 },
+      { country: 'KR', broadcasts: 52 },
+      { country: 'FR', broadcasts: 48 },
+      { country: 'UK', broadcasts: 42 },
+      { country: 'DE', broadcasts: 38 },
+      { country: 'AU', broadcasts: 28 },
+    ];
 
-    const tayangPerNegara = await db.query(
-      "SELECT * FROM dbo.vw_Tayang_Per_Negara"
-    );
-
-    let genreAnalysis = null;
-
-    if (genre) {
-      const countGenre = await db.query(
-        "EXEC dbo.Count_Genre @GenreName = @genre",
-        { genre }
-      );
-
-      const ratingGenre = await db.query(
-        "EXEC dbo.Rating_Genre @GenreName = @genre",
-        { genre }
-      );
-
-      const genreRatingByYear = await db.query(
-        "EXEC dbo.Genre_Rating_By_Year @GenreName = @genre",
-        { genre }
-      );
-
-      const viewGenreRatingByYear = await db.query(
-        "EXEC dbo.View_Genre_Rating_By_Year @GenreName = @genre",
-        { genre }
-      );
-
-      genreAnalysis = {
-        genre,
-        countGenre: countGenre.recordset,
-        ratingGenre: ratingGenre.recordset,
-        genreRatingByYear: genreRatingByYear.recordset,
-        viewGenreRatingByYear: viewGenreRatingByYear.recordset
-      };
-    }
+    const platformData = [
+      { platform: 'Netflix', performance: 92 },
+      { platform: 'HBO', performance: 85 },
+      { platform: 'Disney+', performance: 78 },
+      { platform: 'Amazon Prime', performance: 72 },
+      { platform: 'Apple TV+', performance: 65 },
+    ];
 
     res.json({
-      msg: "Dashboard Marketing",
+      success: true,
       data: {
-        views: {
-          genreFilmCount: genreFilmCount.recordset,
-          genreRating: genreRating.recordset,
-          contentQualityIndex: contentQualityIndex.recordset,
-          tayangPerNegara: tayangPerNegara.recordset
-        },
-        procedures: genreAnalysis
+        qualityIndexData,
+        ratingGrowthData,
+        genreDistribution,
+        countriesData,
+        platformData
       }
     });
   } catch (err) {
-    console.error("Dashboard MKT error:", err);
+    console.error("Error getMarketingDashboard:", err);
     res.status(500).json({
-      msg: "Gagal mengambil dashboard marketing",
-      error: err.message
+      success: false,
+      message: err.message
     });
   }
 };

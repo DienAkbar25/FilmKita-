@@ -1,10 +1,28 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
+const cors = require("cors");
 
 const app = express();
 
 
+<<<<<<< Updated upstream
+=======
+// CORS (UNTUK FRONTEND)
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// parser JSON (WAJIB DI ATAS)
+>>>>>>> Stashed changes
 app.use(express.json());
 
 app.use(

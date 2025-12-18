@@ -1,34 +1,31 @@
-const { sql, poolPromise } = require("../../config/db");
+const { mockFilms } = require("../../config/mockData");
 
 exports.searchFilmsByTerm = async (req, res) => {
-  const { term } = req.query;
-  const page = parseInt(req.query.page || "1");
-
-  if (!term || term.trim() === "") {
-    return res.status(400).json({
-      success: false,
-      message: "Parameter `term` wajib diisi!"
-    });
-  }
-
   try {
-    const pool = await poolPromise;
+    const { term } = req.query;
+    
+    if (!term) {
+      return res.json({
+        success: true,
+        data: mockFilms
+      });
+    }
 
-    const result = await pool.request()
-      .input("term", sql.NVarChar(200), term)
-      .input("page", sql.Int, page)
-      .execute("dbo.SearchTitlesByTerm");
+    const searchTerm = term.toLowerCase();
+    const results = mockFilms.filter(film => 
+      film.title.toLowerCase().includes(searchTerm) ||
+      film.synopsis.toLowerCase().includes(searchTerm)
+    );
 
     res.json({
       success: true,
-      page,
-      data: result.recordset,
+      data: results
     });
   } catch (err) {
-    console.error("❌ Error searchFilmsByTerm:", err);
+    console.error("Error searchFilmsByTerm:", err);
     res.status(500).json({
       success: false,
-      message: err.message,
+      message: err.message
     });
   }
 };

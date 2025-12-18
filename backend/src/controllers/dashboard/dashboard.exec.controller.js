@@ -1,41 +1,89 @@
-const db = require("../../services/appDb");
+const { mockFilms } = require("../../config/mockData");
 
-exports.getDashboard = async (req, res) => {
+exports.getExecutiveDashboard = async (req, res) => {
   try {
-    // 1. Production Trend
-    const productionTrend = await db.query(
-      "SELECT * FROM dbo.vw_ProductionTrend"
-    );
+    // Extract company/director data
+    const companyData = {};
+    mockFilms.forEach((movie) => {
+      const directors = movie.director ? movie.director.split(',').map(d => d.trim()) : [];
+      directors.forEach((director) => {
+        if (director) {
+          if (!companyData[director]) {
+            companyData[director] = {
+              company: director,
+              count: 0,
+              totalRating: 0,
+              movies: [],
+            };
+          }
+          companyData[director].count += 1;
+          companyData[director].totalRating += movie.rating;
+          companyData[director].movies.push(movie);
+        }
+      });
+    });
 
-    // 2. Top 7 Company Rating
-    const topCompanyRating = await db.query(
-      "SELECT * FROM dbo.vw_Top7_CompanyRating"
-    );
+    // Top Count Companies
+    const topCountCompanies = Object.values(companyData)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map((company, index) => ({
+        ...company,
+        rank: index + 1,
+        avgRating: (company.totalRating / company.count).toFixed(1),
+      }));
 
-    // 3. Top 7 Company Film Count
-    const topCompanyFilmCount = await db.query(
-      "SELECT * FROM dbo.vw_Top7_CompanyFilmCount"
-    );
+    // Top Rated Companies
+    const topRatedCompanies = Object.values(companyData)
+      .filter(c => c.count >= 1)
+      .sort((a, b) => (b.totalRating / b.count) - (a.totalRating / a.count))
+      .slice(0, 5)
+      .map((company, index) => ({
+        ...company,
+        rank: index + 1,
+        avgRating: (company.totalRating / company.count).toFixed(1),
+      }));
 
-    // 4. Top 7 Network Contribution
-    const topNetworkContribution = await db.query(
-      "SELECT * FROM dbo.vw_Top7NetworkContribution"
-    );
+    // Network Distribution
+    const networkDistribution = [
+      { name: 'Netflix', value: 45 },
+      { name: 'HBO', value: 30 },
+      { name: 'Disney+', value: 15 },
+      { name: 'Amazon Prime', value: 7 },
+      { name: 'Others', value: 3 },
+    ];
+
+    // Content Production by Year
+    const productionByYear = {};
+    mockFilms.forEach((movie) => {
+      const year = movie.year;
+      if (!productionByYear[year]) {
+        productionByYear[year] = 0;
+      }
+      productionByYear[year] += 1;
+    });
+
+    const yearlyProductionData = Object.entries(productionByYear)
+      .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+      .map(([year, count]) => ({
+        year: year,
+        count: count,
+      }));
 
     res.json({
-      msg: "Dashboard Executive",
+      success: true,
       data: {
-        productionTrend: productionTrend.recordset,
-        topCompanyRating: topCompanyRating.recordset,
-        topCompanyFilmCount: topCompanyFilmCount.recordset,
-        topNetworkContribution: topNetworkContribution.recordset
+        topCountCompanies,
+        topRatedCompanies,
+        networkDistribution,
+        yearlyProductionData
       }
     });
   } catch (err) {
-    console.error("Dashboard EXEC error:", err);
+    console.error("Error getExecutiveDashboard:", err);
     res.status(500).json({
-      msg: "Gagal mengambil data dashboard exec",
-      error: err.message
+      success: false,
+      message: err.message
     });
   }
 };

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const yearController = require("../../controllers/film/film.year.controller");
 
-router.get("/by-year", yearController.getTitlesByYear);
+// GET /api/films/year/:year
+router.get("/year/:year", yearController.getFilmsByYear);
 
 module.exports = router;
