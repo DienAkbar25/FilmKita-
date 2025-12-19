@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, LogOut, User } from 'lucide-react';
 import { api } from '../services/api';
 import MovieCard from '../components/MovieCard';
 
@@ -47,6 +47,19 @@ export default function HomePage() {
   const [selectedGenre, setSelectedGenre] = useState('All Genres');
   const [isGenreOpen, setIsGenreOpen] = useState(false);
   const [isYearOpen, setIsYearOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -97,6 +110,49 @@ export default function HomePage() {
                 <h1 className="text-2xl font-bold text-white tracking-tight">FILMKITA</h1>
                 <p className="text-xs text-amber-400 font-medium">Cinema Classics & Masterpieces</p>
               </div>
+            </div>
+
+            {/* Auth Buttons */}
+            <div className="flex items-center gap-4">
+              {user ? (
+                <>
+                   <div className="flex items-center gap-2 text-slate-300 text-sm">
+                      <User size={18} />
+                      <span>{user.username}</span>
+                    </div>
+                    {user.role === 'role_exec' && (
+                      <button
+                        onClick={() => navigate('/dashboard/executive')}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg transition-all text-sm font-medium"
+                      >
+                        Executive Dashboard
+                      </button>
+                    )}
+                    {user.role === 'role_mkt' && (
+                      <button
+                        onClick={() => navigate('/dashboard/marketing')}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-lg transition-all text-sm font-medium"
+                      >
+                        Marketing Dashboard
+                      </button>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <LogOut size={18} />
+                      Logout
+                    </button>
+                  </>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg transition-all text-sm font-medium"
+                >
+                  <User size={18} />
+                  Login
+                </button>
+              )}
             </div>
           </div>
         </div>

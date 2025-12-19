@@ -186,37 +186,39 @@ export default function FilterPage() {
         
         {/* Filter Controls */}
         <div className="mb-8 flex flex-col lg:flex-row gap-4">
-          {/* Year Filter */}
+          {/* Genre Filter */}
           <div className="relative lg:w-56">
             <button 
               type="button"
               onClick={() => {
-                setIsYearOpen(!isYearOpen);
-                setIsGenreOpen(false);
+                setIsGenreOpen(!isGenreOpen);
+                setIsYearOpen(false);
               }}
               className="w-full px-4 py-3.5 border border-slate-600 rounded-lg flex items-center justify-between hover:border-amber-400 hover:bg-slate-700/30 transition-all bg-slate-700/50 text-white font-medium"
             >
-              <span>{selectedYear || 'Select Year'}</span>
-              <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${isYearOpen ? 'rotate-180' : ''}`} />
+              <span>{selectedGenre}</span>
+              <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${isGenreOpen ? 'rotate-180' : ''}`} />
             </button>
             
-            {isYearOpen && (
+            {isGenreOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 shadow-2xl z-40 max-h-64 overflow-y-auto rounded-lg">
-                {YEARS.map((year) => (
+                {GENRES.map((genre) => (
                   <button
-                    key={year}
+                    key={genre}
                     type="button"
-                    onClick={() => handleYearChange(year.toString())}
+                    onClick={() => handleGenreChange(genre)}
                     className={`w-full px-6 py-3 text-left hover:bg-amber-500/10 hover:text-amber-400 transition-colors font-medium border-b border-slate-700 last:border-b-0 ${
-                      selectedYear === year.toString() ? 'bg-amber-500/20 text-amber-400' : 'text-slate-200'
+                      selectedGenre === genre ? 'bg-amber-500/20 text-amber-400' : 'text-slate-200'
                     }`}
                   >
-                    {year}
+                    {genre}
                   </button>
                 ))}
               </div>
             )}
           </div>
+
+
         </div>
 
         {/* Results Info */}

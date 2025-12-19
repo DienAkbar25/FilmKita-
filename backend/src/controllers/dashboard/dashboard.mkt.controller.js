@@ -44,6 +44,12 @@ exports.getDashboard = async (req, res) => {
         { genre }
       );
 
+      console.log(`Genre: ${genre}`);
+      console.log('Count Genre Result:', countGenre.recordset);
+      console.log('Rating Genre Result:', ratingGenre.recordset);
+      console.log('Genre Rating By Year Result:', genreRatingByYear.recordset);
+      console.log('View Genre Rating By Year Result:', viewGenreRatingByYear.recordset);
+
       genreAnalysis = {
         genre,
         countGenre: countGenre.recordset,
