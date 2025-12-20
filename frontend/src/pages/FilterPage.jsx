@@ -53,18 +53,20 @@ export default function FilterPage() {
   const [selectedYear, setSelectedYear] = useState(filterValue || '');
   const [isGenreOpen, setIsGenreOpen] = useState(false);
   const [isYearOpen, setIsYearOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (filterValue) {
       if (filterType === 'genre') {
-        fetchByGenre(filterValue);
+        fetchByGenre(filterValue, currentPage);
       } else if (filterType === 'year') {
-        fetchByYear(filterValue);
+        fetchByYear(filterValue, currentPage);
       }
     }
-  }, [filterType, filterValue]);
+  }, [filterType, filterValue, currentPage]);
 
-  const fetchByGenre = async (genre) => {
+  const fetchByGenre = async (genre, page = 1) => {
     if (genre === 'All Genres') {
       setResults([]);
       return;
@@ -74,10 +76,11 @@ export default function FilterPage() {
       setLoading(true);
       setError(null);
       
-      const res = await api.get(`/films/by-genre?genre=${encodeURIComponent(genre)}&page=1`);
+      const res = await api.get(`/films/by-genre?genre=${encodeURIComponent(genre)}&page=${page}`);
       
       if (res.data.success) {
         setResults(res.data.data || []);
+        setHasMore(res.data.data && res.data.data.length === 15);
       } else {
         setResults([]);
       }
@@ -90,7 +93,7 @@ export default function FilterPage() {
     }
   };
 
-  const fetchByYear = async (year) => {
+  const fetchByYear = async (year, page = 1) => {
     if (!year) {
       setResults([]);
       return;
@@ -100,10 +103,11 @@ export default function FilterPage() {
       setLoading(true);
       setError(null);
       
-      const res = await api.get(`/films/by-year?year=${year}&page=1`);
+      const res = await api.get(`/films/by-year?year=${year}&page=${page}`);
       
       if (res.data.success) {
         setResults(res.data.data || []);
+        setHasMore(res.data.data && res.data.data.length === 15);
       } else {
         setResults([]);
       }
@@ -119,9 +123,10 @@ export default function FilterPage() {
   const handleGenreChange = (genre) => {
     setSelectedGenre(genre);
     setIsGenreOpen(false);
-    setSearchParams({ type: 'genre', value: genre });
+    setCurrentPage(1);
+    setSearchParams({ type: 'genre', value: genre, page: '1' });
     if (genre !== 'All Genres') {
-      fetchByGenre(genre);
+      fetchByGenre(genre, 1);
     } else {
       setResults([]);
     }
@@ -130,12 +135,18 @@ export default function FilterPage() {
   const handleYearChange = (year) => {
     setSelectedYear(year);
     setIsYearOpen(false);
-    setSearchParams({ type: 'year', value: year });
+    setCurrentPage(1);
+    setSearchParams({ type: 'year', value: year, page: '1' });
     if (year) {
-      fetchByYear(year);
+      fetchByYear(year, 1);
     } else {
       setResults([]);
     }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    setSearchParams({ type: filterType, value: filterValue, page: page.toString() });
   };
 
   const getFilterTitle = () => {
@@ -251,14 +262,52 @@ export default function FilterPage() {
         ) : (
           <>
             {/* Results Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {results.map((item) => (
-                <MovieCard 
-                  key={item.MovieID || item.TVShowID || item.CombineID} 
-                  item={item}
-                  type={item.MovieID ? 'movie' : 'tvshow'}
+                 <MovieCard 
+                   key={item.MovieID || item.TVShowID || item.CombineID} 
+                   item={item}
+                   type={item.MovieID ? 'movie' : 'tvshow'}
+                   onClickCard={() => {
+                     localStorage.setItem('previousPage', window.location.pathname + window.location.search);
+                   }}
+                 />
+               ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                Previous
+              </button>
+
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 text-sm font-medium">Page</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={currentPage}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value) || 1;
+                    if (page > 0) {
+                      handlePageChange(page);
+                    }
+                  }}
+                  className="w-12 px-2 py-1 bg-slate-700/50 border border-slate-600 text-white rounded text-center focus:border-amber-400 focus:outline-none"
                 />
-              ))}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!hasMore}
+                className="px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                Next
+              </button>
             </div>
           </>
         )}

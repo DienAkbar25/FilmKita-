@@ -6,6 +6,7 @@ import FilterPage from './pages/FilterPage';
 import LoginPage from './pages/LoginPage';
 import MarketingDashboard from './pages/MarketingDashboard';
 import ExecutiveDashboard from './pages/ExecutiveDashboard';
+import AboutPage from './pages/AboutPage';
 import './App.css';
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/filter" element={<FilterPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/dashboard/marketing" element={<MarketingDashboard />} />
         <Route path="/dashboard/executive" element={<ExecutiveDashboard />} />
         <Route path="/:type/:id" element={<DetailPage />} />

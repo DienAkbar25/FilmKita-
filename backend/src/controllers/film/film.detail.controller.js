@@ -27,8 +27,8 @@ exports.getFilmFullDetail = async (req, res) => {
     ] = await Promise.all([
       pool.request()
         .input("CombineID", sql.NVarChar(15), combineID)
-        .input("category", sql.NVarChar(100), null) 
-        .input("aggregate", sql.Bit, 1)             
+        .input("category", sql.NVarChar(100), null)
+        .input("aggregate", sql.Bit, 1)
         .input("page", sql.Int, 1)
         .input("pageSize", sql.Int, 100)
         .execute("dbo.GetContributorsByShow"),
@@ -74,11 +74,44 @@ exports.getFilmFullDetail = async (req, res) => {
     const votesRow        = votesResult.recordset?.[0] || null;
     const runtimeRow      = runtimeResult.recordset?.[0] || null;
     const genresRows      = genresResult.recordset || [];
-    const episodesRows    = parentEpisodesResult.recordset || [];
+
+    // ============================
+    // FIX UTAMA: SERIES VS EPISODE
+    // ============================
+    const rawEpisodes = parentEpisodesResult.recordset || [];
+
+    // DETEKSI: apakah combineID yang diminta adalah EPISODE
+    const isEpisode = rawEpisodes.some(
+      ep =>
+        ep.CombineID === combineID &&
+        ep.SeasonNumber !== null &&
+        ep.EpisodeNumber !== null
+    );
+
+    // JIKA EPISODE → JANGAN KIRIM EPISODE LAIN
+    // JIKA SERIES → KIRIM SEMUA EPISODE
+    const episodesRows = isEpisode
+      ? []
+      : rawEpisodes.filter(
+          ep => ep.SeasonNumber !== null && ep.EpisodeNumber !== null
+        );
+
+    // ============================
+    // PARSE CONTRIBUTORS
+    // ============================
+    let contributorsString = null;
+    if (contributorsRow?.Contributors) {
+      contributorsString = contributorsRow.Contributors.trim();
+    }
 
     const detail = {
       combineID,
-      title: yearRow?.title_name || countryRow?.title_name || languageRow?.title_name || null,
+      title:
+        yearRow?.title_name ||
+        countryRow?.title_name ||
+        languageRow?.title_name ||
+        null,
+
       startYear: yearRow?.start_year || null,
 
       rating: ratingRow?.Rating || null,
@@ -88,10 +121,14 @@ exports.getFilmFullDetail = async (req, res) => {
       countries: countryRow?.Countries || null,
       languages: languageRow?.Languages || null,
 
-      contributors: contributorsRow?.Contributors || null,
-      genres: genresRows.map(g => g.Genre_Name),
+      contributors: contributorsString,
+      genres: genresRows
+        .map(g => g.Genre_Name)
+        .filter(g => g && g.trim()),
 
-      episodes: episodesRows, 
+      // 🔥 FINAL FIX
+      isEpisode,
+      episodes: episodesRows,
     };
 
     return res.json({

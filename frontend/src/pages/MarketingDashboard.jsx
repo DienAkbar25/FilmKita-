@@ -36,6 +36,7 @@ export default function MarketingDashboard() {
   const [user, setUser] = useState(null);
   const [selectedGenre, setSelectedGenre] = useState('');
   const [isGenreOpen, setIsGenreOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -79,8 +80,17 @@ export default function MarketingDashboard() {
   };
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem('user');
+    setShowLogoutModal(false);
     navigate('/login');
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   if (error) {
@@ -138,11 +148,30 @@ export default function MarketingDashboard() {
     new Map(cleanedGenreFilmCount.map(item => [item.Genre_Name, item])).values()
   ).map(item => item.Genre_Name).sort();
 
-  // Genre analysis data
+  // Prepare genre distribution data with Top 5 + Others
+  const genreDistributionData = (() => {
+    const sortedGenres = [...cleanedGenreFilmCount].sort((a, b) => b.FilmCount - a.FilmCount);
+    const top5 = sortedGenres.slice(0, 5);
+    const others = sortedGenres.slice(5);
+    
+    const othersTotal = others.reduce((sum, genre) => sum + genre.FilmCount, 0);
+    
+    const result = [...top5];
+    if (othersTotal > 0) {
+      result.push({
+        Genre_Name: 'Lainnya',
+        FilmCount: othersTotal
+      });
+    }
+    
+    return result;
+  })();
+
+  // Genre analysis data - map to correct column names from procedures
   const genreRatingByYear = genreAnalysis?.genreRatingByYear?.map(item => ({
     ...item,
-    year: parseInt(item.year) || 0,
-    avg_rating: parseFloat(item.avg_rating) || 0
+    year: parseInt(item.Year || 0),
+    avg_rating: parseFloat(item.Rating || 0)
   }))?.sort((a, b) => a.year - b.year) || [];
 
   return (
@@ -298,18 +327,18 @@ export default function MarketingDashboard() {
 
           {/* Genre Deep Dive */}
           {uniqueGenres.length > 0 && (
-            <div className="col-span-1 lg:col-span-2 bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-white">Genre Deep Dive Analysis</h3>
+            <div className="col-span-1 lg:col-span-2 bg-gradient-to-br from-slate-800/60 to-slate-900/40 border border-slate-600/50 rounded-xl p-8 shadow-lg">
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-white">Genre Deep Dive Analysis</h3>
                 </div>
-                <div className="relative w-full lg:w-64">
+                <div className="relative w-full lg:w-72">
                   <button
                     onClick={() => setIsGenreOpen(!isGenreOpen)}
-                    className="w-full px-4 py-2.5 border border-slate-600 rounded-lg flex items-center justify-between hover:border-blue-400 hover:bg-slate-700/30 transition-all bg-slate-700/50 text-white font-medium text-sm"
+                    className="w-full px-5 py-3 border border-slate-600 rounded-lg flex items-center justify-between hover:border-blue-400 hover:bg-blue-500/10 transition-all bg-slate-700/50 text-white font-semibold text-base shadow-md hover:shadow-lg"
                   >
-                    <span>{selectedGenre || 'Select Genre'}</span>
-                    <ChevronDown className={`w-4 h-4 text-blue-400 transition-transform ${isGenreOpen ? 'rotate-180' : ''}`} />
+                    <span className="text-blue-300">{selectedGenre || 'Select Genre'}</span>
+                    <ChevronDown className={`w-5 h-5 text-blue-400 transition-transform ${isGenreOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {isGenreOpen && (
@@ -339,28 +368,28 @@ export default function MarketingDashboard() {
               </div>
 
               {genreAnalysis && (
-                <div className="space-y-4">
+                <div className="space-y-0">
                   {/* Stats Row */}
-                  <div className="grid grid-cols-2 lg:grid-cols-2 gap-3">
-                    <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-600">
-                      <p className="text-xs text-slate-400 mb-1">Total Films</p>
-                      <p className="text-xl font-bold text-blue-400">
-                        {genreAnalysis.countGenre?.[0]?.total_count?.toLocaleString() || '0'}
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 pb-6">
+                    <div className="col-span-1 lg:col-span-1 bg-gradient-to-br from-blue-500/20 to-blue-600/10 p-6 rounded-lg border border-blue-500/30 flex flex-col justify-center shadow-md hover:shadow-lg transition-shadow">
+                      <p className="text-xs text-blue-300 font-semibold uppercase tracking-wider mb-3">Total Films</p>
+                      <p className="text-4xl font-bold text-blue-300">
+                        {(genreAnalysis.countGenre?.[0]?.JumlahKonten || 0).toLocaleString()}
                       </p>
                     </div>
-                    <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-600">
-                      <p className="text-xs text-slate-400 mb-1">Avg Rating</p>
-                      <p className="text-xl font-bold text-blue-400">
-                        {genreAnalysis.ratingGenre?.[0]?.avg_rating?.toFixed(2) || '0.00'}
+                    <div className="col-span-1 lg:col-span-1 bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 p-6 rounded-lg border border-cyan-500/30 flex flex-col justify-center shadow-md hover:shadow-lg transition-shadow">
+                      <p className="text-xs text-cyan-300 font-semibold uppercase tracking-wider mb-3">Avg Rating</p>
+                      <p className="text-4xl font-bold text-cyan-300">
+                        {(genreAnalysis.ratingGenre?.[0]?.AvgRating || 0).toFixed(2)}
                       </p>
                     </div>
                   </div>
 
                   {/* Charts Row */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
                     {/* Genre Rating by Year Chart */}
-                    <div>
-                      <h4 className="text-sm font-bold text-blue-400 mb-3">Rating Trend by Year</h4>
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/30 p-6 rounded-lg border border-slate-600/50 shadow-lg">
+                      <h4 className="text-base font-bold text-blue-300 mb-5">Rating Trend by Year</h4>
                       <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={genreRatingByYear}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
@@ -387,20 +416,21 @@ export default function MarketingDashboard() {
                     </div>
 
                     {/* Genre Distribution Pie Chart - Larger */}
-                    <div>
-                      <h4 className="text-sm font-bold text-blue-400 mb-3">Genre Distribution</h4>
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/30 p-6 rounded-lg border border-slate-600/50 shadow-lg -mt-16">
+                      <h4 className="text-base font-bold text-blue-300 mb-5">Genre Distribution</h4>
                       <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                           <Pie
-                            data={cleanedGenreFilmCount.slice(0, 5)}
+                            data={genreDistributionData}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            label={({ Genre_Name, FilmCount }) => `${Genre_Name.substring(0, 10)}`}
-                            outerRadius={100}
+                            label={({ Genre_Name, FilmCount }) => `${Genre_Name}: ${FilmCount.toLocaleString()}`}
+                            outerRadius={80}
+                            innerRadius={40}
                             dataKey="FilmCount"
                           >
-                            {cleanedGenreFilmCount.map((entry, index) => (
+                            {genreDistributionData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
@@ -457,36 +487,7 @@ export default function MarketingDashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* Genre Distribution Pie */}
-          <div className="col-span-1 lg:col-span-2 bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-white mb-4">Genre Distribution by Film Count</h3>
-            <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={cleanedGenreFilmCount.slice(0, 10)}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  label={({ Genre_Name, FilmCount }) => `${Genre_Name}: ${FilmCount.toLocaleString()}`}
-                  outerRadius={120}
-                  dataKey="FilmCount"
-                >
-                  {cleanedGenreFilmCount.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1e293b',
-                    border: '1px solid #3b82f6',
-                    borderRadius: '8px',
-                    color: '#fff',
-                  }}
-                  formatter={(value) => value.toLocaleString()}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+
         </div>
       </main>
 
@@ -511,6 +512,31 @@ export default function MarketingDashboard() {
           </div>
         </div>
       </footer>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-8 max-w-sm mx-4 border border-slate-700">
+            <h3 className="text-xl font-bold text-white mb-4">Konfirmasi Logout</h3>
+            <p className="text-slate-300 mb-8">Apakah anda yakin ingin log out?</p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelLogout}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Tidak
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Ya
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

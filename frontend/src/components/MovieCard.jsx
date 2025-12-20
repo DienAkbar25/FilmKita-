@@ -1,15 +1,21 @@
 import { Star, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function MovieCard({ item, type }) {
+export default function MovieCard({ item, type, onClickCard }) {
   const navigate = useNavigate();
-  const title = item.Title || item.title || item.Judul_Film || item.judul_film || 'No Title';
-  const rating = item.Rating || item.rating || 0;
+  const title = item.Title || item.title || item.title_name || item.Judul_Film || item.judul_film || 'No Title';
+  const rating = item.Rating || item.rating;
   const year = item.Year || item.year || item.startYear || item.Start_Year || item.start_year || 'N/A';
   const genres = item.Genres || item.genres || item.Genre_List || item.genre_list || '';
   const id = item.CombineID || item.combineID || item.MovieID || item.TVShowID || item.ID_Film || item.id_film || '';
+  
+  const displayRating = rating !== null && rating !== undefined ? rating.toFixed(1) : 'Tidak diketahui';
+  const displayYear = year !== 'N/A' ? year : 'Tidak diketahui';
 
   const handleViewDetails = () => {
+    if (onClickCard) {
+      onClickCard();
+    }
     if (type === 'movie') {
       navigate(`/movie/${id}`);
     } else {
@@ -35,11 +41,11 @@ export default function MovieCard({ item, type }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-              <span className="text-xs font-bold text-amber-400">{rating.toFixed(1)}</span>
+              <span className="text-xs font-bold text-amber-400">{displayRating}</span>
             </div>
             <div className="flex items-center gap-1 text-slate-400 text-xs">
               <Calendar className="w-3 h-3" />
-              <span className="font-medium">{year}</span>
+              <span className="font-medium">{displayYear}</span>
             </div>
           </div>
         </div>

@@ -33,6 +33,7 @@ export default function ExecutiveDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -62,8 +63,17 @@ export default function ExecutiveDashboard() {
   };
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem('user');
+    setShowLogoutModal(false);
     navigate('/login');
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   if (error) {
@@ -165,13 +175,47 @@ export default function ExecutiveDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Title Section */}
-        <div className="mb-12">
-          <h2 className="text-5xl font-bold text-white mb-2 tracking-tight">Executive Summary</h2>
-          <p className="text-slate-400 text-lg">High-level business insights and KPIs</p>
-        </div>
+          <div className="mb-12">
+            <h2 className="text-5xl font-bold text-white mb-2 tracking-tight">Executive Summary</h2>
+            <p className="text-slate-400 text-lg">High-level business insights and KPIs</p>
+          </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
+            <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
+              <p className="text-slate-400 text-sm font-medium mb-2">Total Films Analyzed</p>
+              <p className="text-3xl font-bold text-amber-400">
+                {sortedProductionTrend.reduce((sum, item) => sum + item.JumlahFilm, 0).toLocaleString()}
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
+              <p className="text-slate-400 text-sm font-medium mb-2">Top Rated Company</p>
+              <p className="text-2xl font-bold text-amber-400">
+                {cleanedTopCompanyRating[0]?.Rating?.toFixed(1) || 'N/A'}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">{cleanedTopCompanyRating[0]?.Company_Name || 'N/A'}</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
+              <p className="text-slate-400 text-sm font-medium mb-2">Most Productive Company</p>
+              <p className="text-2xl font-bold text-amber-400">
+                {cleanedTopCompanyFilmCount[0]?.JumlahFilm?.toLocaleString() || 'N/A'}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">{cleanedTopCompanyFilmCount[0]?.Company_Name || 'N/A'}</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
+              <p className="text-slate-400 text-sm font-medium mb-2">Top Network</p>
+              <p className="text-2xl font-bold text-amber-400">
+                {cleanedTopNetworkContribution[0]?.JumlahFilm?.toLocaleString() || 'N/A'}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">{cleanedTopNetworkContribution[0]?.network_name || 'N/A'}</p>
+            </div>
+          </div>
+
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Production Trend */}
           <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6 lg:col-span-2">
             <h3 className="text-lg font-bold text-white mb-4">Production Trend by Year</h3>
@@ -321,42 +365,8 @@ export default function ExecutiveDashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
-          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
-            <p className="text-slate-400 text-sm font-medium mb-2">Total Films Analyzed</p>
-            <p className="text-3xl font-bold text-amber-400">
-              {sortedProductionTrend.reduce((sum, item) => sum + item.JumlahFilm, 0).toLocaleString()}
-            </p>
           </div>
-
-          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
-            <p className="text-slate-400 text-sm font-medium mb-2">Top Rated Company</p>
-            <p className="text-2xl font-bold text-amber-400">
-              {cleanedTopCompanyRating[0]?.Rating?.toFixed(1) || 'N/A'}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">{cleanedTopCompanyRating[0]?.Company_Name || 'N/A'}</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
-            <p className="text-slate-400 text-sm font-medium mb-2">Most Productive Company</p>
-            <p className="text-2xl font-bold text-amber-400">
-              {cleanedTopCompanyFilmCount[0]?.JumlahFilm?.toLocaleString() || 'N/A'}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">{cleanedTopCompanyFilmCount[0]?.Company_Name || 'N/A'}</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600 rounded-lg p-6">
-            <p className="text-slate-400 text-sm font-medium mb-2">Top Network</p>
-            <p className="text-2xl font-bold text-amber-400">
-              {cleanedTopNetworkContribution[0]?.JumlahFilm?.toLocaleString() || 'N/A'}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">{cleanedTopNetworkContribution[0]?.network_name || 'N/A'}</p>
-          </div>
-        </div>
-      </main>
+          </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-700 bg-slate-900/50 backdrop-blur-md mt-24">
@@ -366,9 +376,9 @@ export default function ExecutiveDashboard() {
               © 2024 FILMKITA. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-slate-400 hover:text-amber-400 text-sm transition-colors">
+              <button onClick={() => navigate('/about')} className="text-slate-400 hover:text-amber-400 text-sm transition-colors">
                 About
-              </a>
+              </button>
               <a href="#" className="text-slate-400 hover:text-amber-400 text-sm transition-colors">
                 Privacy
               </a>
@@ -379,6 +389,31 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
       </footer>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-8 max-w-sm mx-4 border border-slate-700">
+            <h3 className="text-xl font-bold text-white mb-4">Konfirmasi Logout</h3>
+            <p className="text-slate-300 mb-8">Apakah anda yakin ingin log out?</p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelLogout}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Tidak
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Ya
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

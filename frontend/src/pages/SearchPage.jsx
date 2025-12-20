@@ -218,6 +218,10 @@ export default function SearchPage() {
                   key={item.CombineID || item.MovieID || item.TVShowID || item.ID_Film || idx} 
                   item={item}
                   type={item.MovieID ? 'movie' : 'tvshow'}
+                  onClickCard={() => {
+                    localStorage.setItem('searchQuery', queryParam);
+                    localStorage.setItem('searchGenre', selectedGenre);
+                  }}
                 />
               ))}
             </div>

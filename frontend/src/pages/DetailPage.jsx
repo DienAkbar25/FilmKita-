@@ -27,6 +27,38 @@ export default function DetailPage() {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [parentSeriesData, setParentSeriesData] = useState(null);
+  const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(-1);
+  
+  const handleBack = () => {
+    // Check if this is an episode with a parent series
+    const parentSeriesId = localStorage.getItem('parentSeriesId');
+    const searchQuery = localStorage.getItem('searchQuery');
+    const searchGenre = localStorage.getItem('searchGenre');
+    const previousPage = localStorage.getItem('previousPage');
+    
+    // Remove temp storage
+    localStorage.removeItem('parentSeriesId');
+    localStorage.removeItem('searchQuery');
+    localStorage.removeItem('searchGenre');
+    localStorage.removeItem('previousPage');
+    
+    // If this is an episode, navigate to parent series
+    if (parentSeriesId && item && item.combineID !== parentSeriesId) {
+      navigate(`/movie/${parentSeriesId}`);
+    } else if (searchQuery) {
+      // If came from search, go back to search results
+      let searchUrl = `/search?q=${encodeURIComponent(searchQuery)}`;
+      if (searchGenre && searchGenre !== 'All Genres') {
+        searchUrl += `&genre=${encodeURIComponent(searchGenre)}`;
+      }
+      navigate(searchUrl);
+    } else if (previousPage) {
+      navigate(previousPage);
+    } else {
+      navigate('/');
+    }
+  };
 
   useEffect(() => {
     fetchDetail();
@@ -40,12 +72,48 @@ export default function DetailPage() {
       
       if (res.data.success) {
         setItem(res.data.data);
+        
+        // Check if this is an episode with parent series
+        const parentSeriesId = localStorage.getItem('parentSeriesId');
+        if (parentSeriesId && res.data.data.combineID !== parentSeriesId) {
+          // Fetch parent series data to get episode list
+          fetchParentSeriesData(parentSeriesId);
+        }
       }
     } catch (err) {
       console.error('Error fetching detail:', err);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchParentSeriesData = async (parentId) => {
+    try {
+      const res = await api.get(`/films/detail/${parentId}`);
+      if (res.data.success && res.data.data.episodes) {
+        setParentSeriesData(res.data.data);
+        // Find current episode index
+        const episodes = res.data.data.episodes;
+        const currentIdx = episodes.findIndex(ep => ep.CombineID === id);
+        setCurrentEpisodeIndex(currentIdx);
+      }
+    } catch (err) {
+      console.error('Error fetching parent series:', err);
+    }
+  };
+
+  const handlePrevEpisode = () => {
+    if (parentSeriesData && currentEpisodeIndex > 0) {
+      const prevEpisode = parentSeriesData.episodes[currentEpisodeIndex - 1];
+      navigate(`/movie/${prevEpisode.CombineID}`);
+    }
+  };
+
+  const handleNextEpisode = () => {
+    if (parentSeriesData && currentEpisodeIndex < parentSeriesData.episodes.length - 1) {
+      const nextEpisode = parentSeriesData.episodes[currentEpisodeIndex + 1];
+      navigate(`/movie/${nextEpisode.CombineID}`);
     }
   };
 
@@ -64,7 +132,7 @@ export default function DetailPage() {
           <Film className="w-16 h-16 text-slate-600 mx-auto mb-4" />
           <p className="text-red-400 text-lg mb-6">{error || 'Film tidak ditemukan'}</p>
           <button 
-            onClick={() => navigate('/')}
+            onClick={handleBack}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg font-medium hover:from-amber-600 hover:to-orange-700 transition-all"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -81,7 +149,7 @@ export default function DetailPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <Header onBack={() => navigate('/')} />
+      <Header onBack={handleBack} />
 
       {/* Main Content */}
       <main className={`${LAYOUT.maxWidth} mx-auto ${LAYOUT.padding} ${LAYOUT.py}`}>
@@ -108,19 +176,49 @@ export default function DetailPage() {
           )}
 
           {/* Episodes Section */}
-          {item.episodes && item.episodes.length > 0 && (
-            <EpisodesSection episodes={item.episodes} />
-          )}
+           {item.episodes && item.episodes.length > 0 && (
+             <EpisodesSection episodes={item.episodes} parentSeriesId={item.combineID} />
+           )}
 
-          {/* Back Button */}
-          <div className="mt-12 text-center">
-            <button 
-              onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 transition-all font-medium"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Kembali ke Daftar Film
-            </button>
+          {/* Episode Navigation or Back Button */}
+          <div className="mt-12">
+            {parentSeriesData && currentEpisodeIndex >= 0 ? (
+              // Episode navigation
+              <div className="flex items-center justify-center gap-3">
+                <button 
+                  onClick={handlePrevEpisode}
+                  disabled={currentEpisodeIndex === 0}
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Episode Sebelumnya
+                </button>
+                
+                <span className="text-slate-400 text-sm font-medium">
+                  Episode {currentEpisodeIndex + 1} dari {parentSeriesData.episodes.length}
+                </span>
+                
+                <button 
+                  onClick={handleNextEpisode}
+                  disabled={currentEpisodeIndex === parentSeriesData.episodes.length - 1}
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                >
+                  Episode Selanjutnya
+                  <ChevronLeft className="w-4 h-4 rotate-180" />
+                </button>
+              </div>
+            ) : (
+              // Back button for non-episodes
+              <div className="text-center">
+                <button 
+                  onClick={handleBack}
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 transition-all font-medium"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Kembali ke Daftar Film
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -147,7 +245,7 @@ function Header({ onBack }) {
             <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center rounded-lg shadow-lg">
               <span className="text-white font-bold text-sm">F</span>
             </div>
-            <span className="text-white font-bold">FilmKu</span>
+            <span className="text-white font-bold">FilmKita</span>
           </div>
         </div>
       </div>
@@ -272,27 +370,72 @@ function InformationCards({ data, contributors }) {
 
 function ActorsSection({ contributors }) {
   const cast = getCast(contributors);
+  const actors = contributors.actors || [];
+  const actresses = contributors.actresses || [];
   
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 mb-8">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="bg-slate-700/50 p-3 rounded-lg flex-shrink-0">
-          <Users className="w-6 h-6 text-slate-400" />
+    <div className="bg-gradient-to-br from-slate-800/50 to-amber-900/10 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 mb-8">
+      <div className="flex items-center gap-4 mb-6">
+        <div className="bg-amber-500/20 p-3 rounded-lg flex-shrink-0">
+          <Users className="w-6 h-6 text-amber-400" />
         </div>
-        <h3 className="text-slate-400 text-sm font-semibold uppercase tracking-wider">Aktor</h3>
+        <div>
+          <h3 className="text-white text-lg font-bold">Casting</h3>
+          <p className="text-slate-400 text-sm mt-1">Aktor dan Aktris dalam film ini</p>
+        </div>
       </div>
       
-      <div className="border-t border-slate-700/50 pt-4">
-        <div className="flex flex-wrap gap-3">
-          {cast.slice(0, 8).map((actor, idx) => (
-            <span 
-              key={idx}
-              className="px-4 py-2 bg-amber-500/30 text-amber-200 border border-amber-400/30 rounded-lg text-sm font-semibold"
-            >
-              {actor}
-            </span>
-          ))}
-        </div>
+      <div className="space-y-6">
+        {/* Actors */}
+        {actors.length > 0 && (
+          <div>
+            <h4 className="text-amber-400 text-sm font-semibold uppercase tracking-wider mb-3">Aktor</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {actors.map((actor, idx) => (
+                <div 
+                  key={idx}
+                  className="px-4 py-2.5 bg-slate-700/40 text-slate-200 border border-slate-600/50 rounded-lg text-sm font-medium hover:bg-slate-700/60 hover:border-amber-400/30 transition-all"
+                >
+                  🎭 {actor}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Actresses */}
+        {actresses.length > 0 && (
+          <div>
+            <h4 className="text-amber-400 text-sm font-semibold uppercase tracking-wider mb-3">Aktris</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {actresses.map((actress, idx) => (
+                <div 
+                  key={idx}
+                  className="px-4 py-2.5 bg-slate-700/40 text-slate-200 border border-slate-600/50 rounded-lg text-sm font-medium hover:bg-slate-700/60 hover:border-amber-400/30 transition-all"
+                >
+                  🎭 {actress}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Combined cast if separated categories not available */}
+        {cast.length > 0 && actors.length === 0 && actresses.length === 0 && (
+          <div>
+            <h4 className="text-amber-400 text-sm font-semibold uppercase tracking-wider mb-3">Pemain Utama</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {cast.slice(0, 12).map((person, idx) => (
+                <div 
+                  key={idx}
+                  className="px-4 py-2.5 bg-slate-700/40 text-slate-200 border border-slate-600/50 rounded-lg text-sm font-medium hover:bg-slate-700/60 hover:border-amber-400/30 transition-all"
+                >
+                  🎭 {person}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -376,10 +519,18 @@ function CrewSection({ contributors }) {
   );
 }
 
-function EpisodesSection({ episodes }) {
+function EpisodesSection({ episodes, parentSeriesId }) {
+  const navigate = useNavigate();
   const [expandedEpisode, setExpandedEpisode] = useState(null);
+  const [currentEpisodePage, setCurrentEpisodePage] = useState(1);
+  const episodesPerPage = 15;
 
   if (!episodes || episodes.length === 0) return null;
+
+  const totalEpisodePages = Math.ceil(episodes.length / episodesPerPage);
+  const startIdx = (currentEpisodePage - 1) * episodesPerPage;
+  const endIdx = startIdx + episodesPerPage;
+  const displayedEpisodes = episodes.slice(startIdx, endIdx);
 
   return (
     <div className="bg-white/5 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 mb-8">
@@ -393,19 +544,38 @@ function EpisodesSection({ episodes }) {
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {episodes.map((episode, idx) => (
-          <div
-            key={idx}
-            onClick={() => setExpandedEpisode(expandedEpisode === idx ? null : idx)}
+        {displayedEpisodes.map((episode, idx) => {
+          const actualIdx = startIdx + idx;
+          const seasonNum = episode.SeasonNumber;
+          const episodeNum = episode.EpisodeNumber;
+          const episodeTitle = episode.title_name || episode.original_title || episode.title || episode.name || `Episode ${episodeNum || idx + 1}`;
+          
+          const handleEpisodeClick = (e) => {
+            // If clicking on the detail area or buttons, just expand/collapse
+            if (e.target.closest('.episode-details') || expandedEpisode === actualIdx) {
+              setExpandedEpisode(expandedEpisode === actualIdx ? null : actualIdx);
+            } else {
+              // Otherwise, navigate to episode detail and save parent series ID
+              localStorage.setItem('parentSeriesId', parentSeriesId);
+              navigate(`/movie/${episode.CombineID}`);
+            }
+          };
+
+          return (
+           <div
+             key={actualIdx}
+             onClick={handleEpisodeClick}
             className="bg-gradient-to-r from-slate-800/50 to-amber-900/10 border border-slate-700/50 rounded-lg p-4 hover:border-amber-400/40 transition-all cursor-pointer"
           >
             <div className="flex items-center gap-4">
               <div className="bg-amber-500/20 px-3 py-2 rounded-lg flex-shrink-0">
-                <span className="text-amber-400 font-bold text-sm">Ep {episode.number || idx + 1}</span>
+                <span className="text-amber-400 font-bold text-sm">
+                  {seasonNum && episodeNum ? `S${seasonNum} E${episodeNum}` : `Ep ${episode.number || idx + 1}`}
+                </span>
               </div>
               <div className="flex-1">
                 <h4 className="text-white font-semibold">
-                  {episode.title || episode.name || `Episode ${episode.number || idx + 1}`}
+                  {episodeTitle}
                 </h4>
                 {episode.year && (
                   <p className="text-slate-400 text-sm mt-1">{episode.year}</p>
@@ -420,8 +590,8 @@ function EpisodesSection({ episodes }) {
             </div>
 
             {/* Episode Details (Expandable) */}
-            {expandedEpisode === idx && (
-              <div className="mt-4 pt-4 border-t border-slate-700/30 space-y-3">
+            {expandedEpisode === actualIdx && (
+              <div className="episode-details mt-4 pt-4 border-t border-slate-700/30 space-y-3">
                 {episode.description && (
                   <div>
                     <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Description</p>
@@ -443,10 +613,50 @@ function EpisodesSection({ episodes }) {
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+              )}
+              </div>
+              );
+              })}
+              </div>
+
+              {/* Episode Pagination */}
+              {totalEpisodePages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-6 pt-6 border-t border-slate-700/50">
+              <button
+              onClick={() => setCurrentEpisodePage(currentEpisodePage - 1)}
+              disabled={currentEpisodePage === 1}
+              className="px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+              Previous
+              </button>
+
+              <div className="flex items-center gap-2">
+              <span className="text-slate-400 text-sm font-medium">Page</span>
+              <input
+              type="number"
+              min="1"
+              max={totalEpisodePages}
+              value={currentEpisodePage}
+              onChange={(e) => {
+                const page = parseInt(e.target.value) || 1;
+                if (page > 0 && page <= totalEpisodePages) {
+                  setCurrentEpisodePage(page);
+                }
+              }}
+              className="w-12 px-2 py-1 bg-slate-700/50 border border-slate-600 text-white rounded text-center focus:border-amber-400 focus:outline-none"
+              />
+              <span className="text-slate-400 text-sm">of {totalEpisodePages}</span>
+              </div>
+
+              <button
+              onClick={() => setCurrentEpisodePage(currentEpisodePage + 1)}
+              disabled={currentEpisodePage >= totalEpisodePages}
+              className="px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+              Next
+              </button>
+              </div>
+              )}
+              </div>
+              );
+              }

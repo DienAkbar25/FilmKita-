@@ -48,6 +48,7 @@ export default function HomePage() {
   const [isGenreOpen, setIsGenreOpen] = useState(false);
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -57,8 +58,18 @@ export default function HomePage() {
   }, []);
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
+    setShowLogoutModal(false);
+    navigate('/login');
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleSearch = (e) => {
@@ -162,7 +173,7 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Title Section */}
         <div className="mb-12">
-          <h2 className="text-5xl font-bold text-white mb-2 tracking-tight">Film Collection</h2>
+          <h2 className="text-5xl font-bold text-white mb-2 tracking-tight">Kamu mau nonton apa hari ini ?</h2>
           <p className="text-slate-400 text-lg">Discover and explore timeless cinema</p>
         </div>
         
@@ -307,13 +318,38 @@ export default function HomePage() {
               © 2024 FILMKITA. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-slate-400 hover:text-amber-400 text-sm transition-colors">About</a>
+              <button onClick={() => navigate('/about')} className="text-slate-400 hover:text-amber-400 text-sm transition-colors">About</button>
               <a href="#" className="text-slate-400 hover:text-amber-400 text-sm transition-colors">Privacy</a>
               <a href="#" className="text-slate-400 hover:text-amber-400 text-sm transition-colors">Contact</a>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-8 max-w-sm mx-4 border border-slate-700">
+            <h3 className="text-xl font-bold text-white mb-4">Konfirmasi Logout</h3>
+            <p className="text-slate-300 mb-8">Apakah anda yakin ingin log out?</p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelLogout}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Tidak
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Ya
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

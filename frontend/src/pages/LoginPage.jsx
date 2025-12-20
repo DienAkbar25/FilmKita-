@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowLeft } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function LoginPage() {
@@ -53,6 +53,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white transition duration-200 flex items-center gap-2"
+        title="Kembali ke Home"
+      >
+        <ArrowLeft size={20} />
+        <span className="hidden sm:inline text-sm font-medium">Kembali</span>
+      </button>
+
       <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-10 border border-slate-700">
         {/* Header */}
         <div className="text-center mb-10">
@@ -117,14 +127,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Demo Info */}
-        <div className="mt-10 pt-8 border-t border-slate-700">
-          <p className="text-sm text-slate-400 text-center mb-4 font-medium">Demo Credentials</p>
-          <div className="bg-slate-700/50 p-4 rounded-lg text-sm text-slate-300 space-y-2 border border-slate-600">
-            <p><strong>Username:</strong> admin</p>
-            <p><strong>Password:</strong> 123456</p>
-          </div>
-        </div>
+ 
       </div>
     </div>
   );
