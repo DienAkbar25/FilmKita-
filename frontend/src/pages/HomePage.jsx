@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, LogOut, User } from 'lucide-react';
 import { api } from '../services/api';
@@ -49,6 +49,8 @@ export default function HomePage() {
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const genreDropdownRef = useRef(null);
+  const yearDropdownRef = useRef(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -81,6 +83,21 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (genreDropdownRef.current && !genreDropdownRef.current.contains(event.target)) {
+        setIsGenreOpen(false);
+      }
+      if (yearDropdownRef.current && !yearDropdownRef.current.contains(event.target)) {
+        setIsYearOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchData = async () => {
@@ -192,7 +209,7 @@ export default function HomePage() {
           </div>
 
           {/* Genre Dropdown */}
-          <div className="relative lg:w-56">
+          <div className="relative lg:w-56" ref={genreDropdownRef}>
             <button 
               onClick={() => {
                 setIsGenreOpen(!isGenreOpen);
@@ -226,7 +243,7 @@ export default function HomePage() {
           </div>
 
           {/* Year Dropdown */}
-          <div className="relative lg:w-48">
+          <div className="relative lg:w-48" ref={yearDropdownRef}>
             <button className="w-full px-4 py-3.5 border border-slate-600 rounded-lg flex items-center justify-between hover:border-amber-400 hover:bg-slate-700/30 transition-all bg-slate-700/50 text-white font-medium"
               onClick={() => setIsYearOpen(!isYearOpen)}
             >

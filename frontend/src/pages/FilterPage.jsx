@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, ChevronLeft } from 'lucide-react';
 import { api } from '../services/api';
@@ -40,21 +40,23 @@ const GENRES = [
 const YEARS = Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - i).sort();
 
 export default function FilterPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  
-  const filterType = searchParams.get('type') || 'genre'; // 'genre' or 'year'
-  const filterValue = searchParams.get('value') || '';
-  
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedGenre, setSelectedGenre] = useState(filterValue || 'All Genres');
-  const [selectedYear, setSelectedYear] = useState(filterValue || '');
-  const [isGenreOpen, setIsGenreOpen] = useState(false);
-  const [isYearOpen, setIsYearOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
-  const [hasMore, setHasMore] = useState(true);
+   const [searchParams, setSearchParams] = useSearchParams();
+   const navigate = useNavigate();
+   
+   const filterType = searchParams.get('type') || 'genre'; // 'genre' or 'year'
+   const filterValue = searchParams.get('value') || '';
+   
+   const [results, setResults] = useState([]);
+   const [loading, setLoading] = useState(false);
+   const [error, setError] = useState(null);
+   const [selectedGenre, setSelectedGenre] = useState(filterValue || 'All Genres');
+   const [selectedYear, setSelectedYear] = useState(filterValue || '');
+   const [isGenreOpen, setIsGenreOpen] = useState(false);
+   const [isYearOpen, setIsYearOpen] = useState(false);
+   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+   const [hasMore, setHasMore] = useState(true);
+   const genreDropdownRef = useRef(null);
+   const yearDropdownRef = useRef(null);
 
   useEffect(() => {
     if (filterValue) {
@@ -65,6 +67,21 @@ export default function FilterPage() {
       }
     }
   }, [filterType, filterValue, currentPage]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (genreDropdownRef.current && !genreDropdownRef.current.contains(event.target)) {
+        setIsGenreOpen(false);
+      }
+      if (yearDropdownRef.current && !yearDropdownRef.current.contains(event.target)) {
+        setIsYearOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchByGenre = async (genre, page = 1) => {
     if (genre === 'All Genres') {
@@ -197,8 +214,9 @@ export default function FilterPage() {
         
         {/* Filter Controls */}
         <div className="mb-8 flex flex-col lg:flex-row gap-4">
-          {/* Genre Filter */}
-          <div className="relative lg:w-56">
+          {/* Genre Filter - only show when filtering by genre */}
+          {filterType === 'genre' && (
+          <div className="relative lg:w-56" ref={genreDropdownRef}>
             <button 
               type="button"
               onClick={() => {
@@ -226,11 +244,44 @@ export default function FilterPage() {
                   </button>
                 ))}
               </div>
+              )}
+              </div>
+              )}
+
+              {/* Year Filter - only show when filtering by year */}
+              {filterType === 'year' && (
+            <div className="relative lg:w-56" ref={yearDropdownRef}>
+            <button 
+              type="button"
+              onClick={() => {
+                setIsYearOpen(!isYearOpen);
+                setIsGenreOpen(false);
+              }}
+              className="w-full px-4 py-3.5 border border-slate-600 rounded-lg flex items-center justify-between hover:border-amber-400 hover:bg-slate-700/30 transition-all bg-slate-700/50 text-white font-medium"
+            >
+              <span>{selectedYear || 'All Years'}</span>
+              <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${isYearOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isYearOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 shadow-2xl z-40 max-h-64 overflow-y-auto rounded-lg">
+                {Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - i).sort().map((year) => (
+                  <button
+                    key={year}
+                    type="button"
+                    onClick={() => handleYearChange(year)}
+                    className={`w-full px-6 py-3 text-left hover:bg-amber-500/10 hover:text-amber-400 transition-colors font-medium border-b border-slate-700 last:border-b-0 ${
+                      selectedYear === year.toString() ? 'bg-amber-500/20 text-amber-400' : 'text-slate-200'
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
             )}
-          </div>
-
-
-        </div>
+            </div>
+            )}
+            </div>
 
         {/* Results Info */}
         {!loading && results.length > 0 && (
