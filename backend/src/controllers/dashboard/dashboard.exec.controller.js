@@ -1,41 +1,85 @@
-const db = require("../../services/appDb");
+const { sql, poolPromise } = require("../../config/db");
+const asyncHandler = require("../../middleware/mid.asyncHandler");
 
-exports.getDashboard = async (req, res) => {
-  try {
-    // 1. Production Trend
-    const productionTrend = await db.query(
-      "SELECT * FROM dbo.vw_ProductionTrend"
-    );
+// GET /api/dashboard/exec
+// GET /api/dashboard/exec?country=GB
+exports.getDashboard = asyncHandler(async (req, res) => {
+  console.log('\n🔥 DASHBOARD EXEC CALLED');
+  console.log('Query params:', req.query);
+  const { country } = req.query;
+  console.log('Country param:', country);
+  const countryCode = country
+    ? country.trim().toUpperCase()
+    : null;
+  console.log('CountryCode:', countryCode);
+  const pool = await poolPromise;
 
-    // 2. Top 7 Company Rating
-    const topCompanyRating = await db.query(
-      "SELECT * FROM dbo.vw_Top7_CompanyRating"
-    );
+  // =====================
+  // GLOBAL DATA
+  // =====================
+  const [
+    productionTrend,
+    topCompanyRating,
+    topCompanyFilmCount,
+    topNetworkContribution
+  ] = await Promise.all([
+    pool.request().query("SELECT * FROM dbo.vw_ProductionTrend"),
+    pool.request().query("SELECT * FROM dbo.vw_Top7_CompanyRating"),
+    pool.request().query("SELECT * FROM dbo.vw_Top7_CompanyFilmCount"),
+    pool.request().query("SELECT * FROM dbo.vw_Top7NetworkContribution")
+  ]);
 
-    // 3. Top 7 Company Film Count
-    const topCompanyFilmCount = await db.query(
-      "SELECT * FROM dbo.vw_Top7_CompanyFilmCount"
-    );
+  // =====================
+  // COUNTRY-SPECIFIC DATA
+  // =====================
+  let countryAnalysis = null;
 
-    // 4. Top 7 Network Contribution
-    const topNetworkContribution = await db.query(
-      "SELECT * FROM dbo.vw_Top7NetworkContribution"
-    );
+  if (countryCode) {
+    try {
+      console.log('Searching for country:', countryCode);
+      const [
+        topGenreByCountry,
+        topNetworkByCountry
+      ] = await Promise.all([
+        pool.request()
+          .input("CountryName", sql.NVarChar(50), countryCode)
+          .execute("dbo.TOP5_GENRE_BY_COUNTRY"),
+        
+        pool.request()
+          .input("CountryName", sql.NVarChar(50), countryCode)
+          .execute("dbo.TOP5_NETWORK_BY_COUNTRY")
+      ]);
 
-    res.json({
-      msg: "Dashboard Executive",
-      data: {
-        productionTrend: productionTrend.recordset,
-        topCompanyRating: topCompanyRating.recordset,
-        topCompanyFilmCount: topCompanyFilmCount.recordset,
-        topNetworkContribution: topNetworkContribution.recordset
-      }
-    });
-  } catch (err) {
-    console.error("Dashboard EXEC error:", err);
-    res.status(500).json({
-      msg: "Gagal mengambil data dashboard exec",
-      error: err.message
-    });
+      console.log('Genre data:', topGenreByCountry.recordset);
+      console.log('Network data:', topNetworkByCountry.recordset);
+
+      countryAnalysis = {
+        country: countryCode,
+        topGenreByCountry: topGenreByCountry.recordset,
+        topNetworkByCountry: topNetworkByCountry.recordset
+      };
+    } catch (err) {
+      console.error('Error fetching country analysis:', err.message);
+      countryAnalysis = {
+        country: countryCode,
+        topGenreByCountry: [],
+        topNetworkByCountry: [],
+        error: err.message
+      };
+    }
   }
-};
+
+  // =====================
+  // RESPONSE
+  // =====================
+  res.json({
+    msg: "Dashboard Executive",
+    data: {
+      productionTrend: productionTrend.recordset,
+      topCompanyRating: topCompanyRating.recordset,
+      topCompanyFilmCount: topCompanyFilmCount.recordset,
+      topNetworkContribution: topNetworkContribution.recordset,
+      countryAnalysis
+    }
+  });
+});

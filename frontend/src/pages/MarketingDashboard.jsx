@@ -447,6 +447,41 @@ export default function MarketingDashboard() {
                       </ResponsiveContainer>
                     </div>
                   </div>
+
+                  {/* Top 5 Countries by Genre Performance */}
+                  <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/30 p-6 rounded-lg border border-slate-600/50 shadow-lg mt-6">
+                    <h4 className="text-base font-bold text-emerald-300 mb-5">Top 5 Countries - Genre Performance</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-600/50">
+                            <th className="text-left px-4 py-3 text-emerald-300 font-semibold">Rank</th>
+                            <th className="text-left px-4 py-3 text-emerald-300 font-semibold">Country</th>
+                            <th className="text-center px-4 py-3 text-emerald-300 font-semibold">Avg Rating</th>
+                            <th className="text-center px-4 py-3 text-emerald-300 font-semibold">Total Films</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {genreAnalysis.top5CountryByGenre && genreAnalysis.top5CountryByGenre.length > 0 ? (
+                            genreAnalysis.top5CountryByGenre.map((item, index) => (
+                              <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                                <td className="px-4 py-3 text-slate-300">{index + 1}</td>
+                                <td className="px-4 py-3 text-slate-200 font-medium">{item.Country}</td>
+                                <td className="px-4 py-3 text-center text-emerald-400 font-semibold">{parseFloat(item.Avg_Rating).toFixed(2)}</td>
+                                <td className="px-4 py-3 text-center text-slate-300">{item.TotalFilm}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="4" className="px-4 py-6 text-center text-slate-400">
+                                No data available
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
 
